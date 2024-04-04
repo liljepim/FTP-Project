@@ -44,6 +44,8 @@ def startServer():
         with conn:
             print(f"Connected with {addr}")
             conn.send("220".encode('utf-8'))
+            if os.path.isdir('C:/Users/User/Documents/School Files/DLSU/Second Year/Term 2/NSCOM01/MCO/MCO2/FTP-Project/Files'):
+                os.chdir('C:/Users/User/Documents/School Files/DLSU/Second Year/Term 2/NSCOM01/MCO/MCO2/FTP-Project/Files')
             while True:
                 userInput = conn.recv(1024).decode('utf-8')
                 cmd = userInput.split(" ")[0]
@@ -92,6 +94,29 @@ def startServer():
                                 fin_list += f'{file}: {size} bytes\r\n'
                         transfer_conn.sendall(fin_list.encode('utf-8'))
                         transfer_conn.close()
+                    case "CWD":
+                        newdir = " ".join(userInput.split(" ")[1:])
+                        if os.path.isdir(newdir):
+                            os.chdir(newdir)
+                            conn.send("250 Directory successfully changed".encode('utf-8'))
+                        else:
+                            conn.send("550 Requested action not taken. Working directory not changed (non-existent directory)".encode('utf-8'))
+                    case "CDUP":
+                        print(os.path.isdir(os.path.dirname(os.getcwd())))
+                        if os.path.isdir(os.path.dirname(os.getcwd())):
+                            os.chdir(os.path.dirname(os.getcwd()))
+                            conn.send("250 Directory successfully changed".encode('utf-8'))
+                        else:
+                            conn.send("550 Requested action not taken. Working directory not changed (non-existent directory)".encode('utf-8'))
+                    case "MKD":
+                        newdir = " ".join(userInput.split(" ")[1:])
+                        try:
+                            new_dir_complete = os.path.join(os.getcwd(), newdir)
+                            os.mkdir(new_dir_complete)
+                        except:
+                            conn.send("550 Requested action not taken. Working directory not changed (invalid directory)".encode('utf-8'))
+                        else:
+                            conn.send(f"250 {new_dir_complete} successfully created".encode('utf-8'))
                     case "RETR":
                         filename = " ".join(userInput.split(" ")[1:])
                         print(filename)
@@ -107,7 +132,7 @@ def startServer():
                             file.close()
                             conn.send(f'226 Transfer Complete.'.encode('utf-8'))
                         else:
-                            conn.send(f'550 Requested action not taken. File unavailable (e.g. file not found, no access)'.encode('utf-8'))
+                            conn.send(f'550 Requested action not taken. File unavailable (file not found)'.encode('utf-8'))
                         transfer_conn.close()
                     case  "STOR":
                         filename = " ".join(userInput.split(" ")[1:])
@@ -121,7 +146,20 @@ def startServer():
                                 break
                         conn.send("226 Transfer Complete".encode("utf-8"))
                         transfer_conn.close()
-
+                    case "DELE":
+                        filename = " ".join(userInput.split(" ")[1:])
+                        if os.path.isfile(os.path.join(os.getcwd(), filename)):
+                            os.remove(filename)
+                            conn.send(f"250 {filename} successfully deleted".encode('utf-8'))
+                        else:
+                            conn.send(f'550 Requested action not taken. File unavailable (file not found)'.encode('utf-8'))
+                    case "RMD":
+                        deldir = " ".join(userInput.split(" ")[1:])
+                        if os.path.isdir(os.path.join(os.getcwd(), deldir)):
+                            os.rmdir(deldir)
+                            conn.send("250 Directory successfully deleted".encode('utf-8'))
+                        else:
+                            conn.send("550 Requested action not taken. Working directory not changed (non-existent directory)".encode('utf-8'))
 
                 
 def main():

@@ -81,14 +81,49 @@ def startClient():
                             print("Current Working Directory:\n")
                             print(" ".join(s.recv(4096).decode('utf-8').split(" ")[1:]))
                         case 'CWD':
-                            print("TODO")
+                            newdir = " ".join(userInput.split(' ')[1:])
+                            s.sendall(("CWD " + newdir).encode('utf-8'))
+                            res = s.recv(1024).decode('utf-8')
+                            res_code = res.split(" ")[0]
+                            if  res_code == '250':
+                                print(f"Current working directory changed to {newdir}")
+                            elif res_code == '550':
+                                print(" ".join(res.split(" ")[1:]))
                         case 'CDUP':
-                            print("TODO")
-                        case 'MKDIR':
-                            print("TODO")
-                        case 'QUIT':
-                            s.close()
-                            break
+                            s.sendall('CDUP '.encode('utf-8'))
+                            res = s.recv(1024).decode('utf-8')
+                            res_code = res.split(" ")[0]
+                            if  res_code == '250':
+                                print(f"Current working directory successfully changed.")
+                            elif res_code == '550':
+                                print(" ".join(res.split(" ")[1:]))
+                        case 'MKD':
+                            newdir = " ".join(userInput.split(' ')[1:])
+                            s.sendall(("MKD " + newdir).encode('utf-8'))
+                            res = s.recv(1024).decode('utf-8')
+                            res_code = res.split(" ")[0]
+                            if res_code == '250':
+                                print(f"Directory {newdir} successfully created")
+                            elif res_code == '550':
+                                print(" ".join(res.split(" ")[1:]))
+                        case 'RMD':
+                            deldir = " ".join(userInput.split(' ')[1:])
+                            s.sendall(("RMD " + deldir).encode('utf-8'))
+                            res = s.recv(1024).decode('utf-8')
+                            res_code = res.split(" ")[0]
+                            if res_code == '250':
+                                print(f"Directory {deldir} successfully removed.")
+                            elif res_code == '550':
+                                print(" ".join(res.split(" ")[1:]))
+                        case 'DELE':
+                            delfile = " ".join(userInput.split(' ')[1:])
+                            s.sendall(("DELE " + delfile).encode('utf-8'))
+                            res = s.recv(1024).decode('utf-8')
+                            res_code = res.split(" ")[0]
+                            if res_code == '250':
+                                print(f"File {delfile} successfully deleted.")
+                            elif res_code == '550':
+                                print(" ".join(res.split(" ")[1:]))
                         case 'HELP':
                             print(FTP_COMMANDS)
                         case 'PASV':
@@ -106,6 +141,9 @@ def startClient():
                             else:
                                 print("Passive connection established.")
                                 hasPasv = True
+                        case 'QUIT':
+                            s.close()
+                            break
                         case _:
                             print("Invalid command!")
                 elif isLoggedIn and hasPasv:
